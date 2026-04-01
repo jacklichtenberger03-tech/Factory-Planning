@@ -244,6 +244,142 @@
       margin-top: 6px;
       text-align: center;
     }
+
+    /* Payroll section */
+    .payroll-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #2d3447;
+    }
+
+    .payroll-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .payroll-header h2 {
+      margin-bottom: 0;
+    }
+
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toggle-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      cursor: pointer;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #2d3447;
+      border-radius: 22px;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: #64748b;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .toggle input:checked + .toggle-slider {
+      background: #4f46e5;
+    }
+
+    .toggle input:checked + .toggle-slider::before {
+      transform: translateX(18px);
+      background: #a5b4fc;
+    }
+
+    .payroll-disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .payroll-col-headers {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .payroll-col-headers span {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0 10px;
+    }
+
+    .payroll-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .payroll-row input {
+      background: #0f1117;
+      border: 1px solid #2d3447;
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      width: 100%;
+      transition: border-color 0.15s;
+    }
+
+    .payroll-row input:focus {
+      outline: none;
+      border-color: #10b981;
+    }
+
+    .payroll-row input::placeholder { color: #475569; }
+
+    .btn-add-payroll {
+      background: #1e3a3f;
+      color: #34d399;
+      border: 1px dashed #2d6a5f;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn-add-payroll:hover { background: #1e4a4a; border-color: #34d399; }
+
+    .payroll-info {
+      font-size: 0.75rem;
+      color: #475569;
+      margin-top: 8px;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -269,6 +405,35 @@
     <button class="btn btn-add" onclick="addPoint()">+ Add Point</button>
 
     <div id="error" class="error" style="display:none;"></div>
+
+    <div class="payroll-section">
+      <div class="payroll-header">
+        <h2>Payroll Coordinates</h2>
+        <div class="toggle-wrap">
+          <span class="toggle-label">Off</span>
+          <label class="toggle">
+            <input type="checkbox" id="payroll-toggle" onchange="togglePayroll()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">On</span>
+        </div>
+      </div>
+
+      <div id="payroll-content">
+        <div class="payroll-col-headers">
+          <span>Name</span>
+          <span>X</span>
+          <span>Y</span>
+          <span>Payroll ($)</span>
+          <span></span>
+        </div>
+
+        <div id="payroll-list"></div>
+
+        <button class="btn btn-add-payroll" onclick="addPayrollPoint()">+ Add Payroll Point</button>
+        <div class="payroll-info">Lower payroll = stronger pull on the weighted center</div>
+      </div>
+    </div>
 
     <button class="btn btn-calculate" onclick="calculate()">Calculate Weighted Center</button>
     <button class="btn btn-clear" onclick="clearAll()">Clear All</button>
@@ -296,6 +461,9 @@
 <script>
   let points = [];
   let idCounter = 0;
+  let payrollPoints = [];
+  let payrollIdCounter = 0;
+  let payrollEnabled = false;
 
   function addPoint(name = '', x = '', y = '', weight = '1') {
     const id = idCounter++;
@@ -306,6 +474,49 @@
   function removePoint(id) {
     points = points.filter(p => p.id !== id);
     renderList();
+  }
+
+  function addPayrollPoint(name = '', x = '', y = '', payroll = '') {
+    const id = payrollIdCounter++;
+    payrollPoints.push({ id, name, x, y, payroll });
+    renderPayrollList();
+  }
+
+  function removePayrollPoint(id) {
+    payrollPoints = payrollPoints.filter(p => p.id !== id);
+    renderPayrollList();
+  }
+
+  function togglePayroll() {
+    payrollEnabled = document.getElementById('payroll-toggle').checked;
+    const content = document.getElementById('payroll-content');
+    if (payrollEnabled) {
+      content.classList.remove('payroll-disabled');
+    } else {
+      content.classList.add('payroll-disabled');
+    }
+  }
+
+  function renderPayrollList() {
+    const list = document.getElementById('payroll-list');
+    list.innerHTML = '';
+    payrollPoints.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'payroll-row';
+      row.innerHTML = `
+        <input type="text"   placeholder="Location name" value="${esc(p.name)}"    oninput="updatePayroll(${p.id},'name',this.value)">
+        <input type="number" placeholder="X"             value="${esc(p.x)}"       oninput="updatePayroll(${p.id},'x',this.value)" step="any">
+        <input type="number" placeholder="Y"             value="${esc(p.y)}"       oninput="updatePayroll(${p.id},'y',this.value)" step="any">
+        <input type="number" placeholder="Payroll"       value="${esc(p.payroll)}" oninput="updatePayroll(${p.id},'payroll',this.value)" step="any" min="0">
+        <button class="btn-remove" onclick="removePayrollPoint(${p.id})" title="Remove">&#x2715;</button>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  function updatePayroll(id, field, value) {
+    const p = payrollPoints.find(p => p.id === id);
+    if (p) p[field] = value;
   }
 
   function renderList() {
@@ -361,15 +572,46 @@
       parsed.push({ name, x, y, w });
     }
 
-    const totalWeight = parsed.reduce((s, p) => s + p.w, 0);
+    // Add payroll points if enabled
+    let payrollParsed = [];
+    if (payrollEnabled && payrollPoints.length > 0) {
+      const rawPayroll = [];
+      for (const p of payrollPoints) {
+        const x = parseFloat(p.x);
+        const y = parseFloat(p.y);
+        const pay = parseFloat(p.payroll);
+        const name = p.name.trim() || `Payroll ${rawPayroll.length + 1}`;
+
+        if (isNaN(x) || isNaN(y)) { showError(`"${name}" has invalid X or Y coordinates.`); return; }
+        if (isNaN(pay) || pay <= 0) { showError(`"${name}" has an invalid payroll (must be > 0).`); return; }
+
+        rawPayroll.push({ name, x, y, payroll: pay });
+      }
+
+      // Inverse weighting: weight = maxPayroll / payroll
+      // This makes the cheapest location have the highest weight
+      const maxPayroll = Math.max(...rawPayroll.map(p => p.payroll));
+      payrollParsed = rawPayroll.map(p => ({
+        name: p.name,
+        x: p.x,
+        y: p.y,
+        w: maxPayroll / p.payroll,
+        isPayroll: true,
+        payroll: p.payroll
+      }));
+    }
+
+    const allParsed = parsed.concat(payrollParsed);
+
+    const totalWeight = allParsed.reduce((s, p) => s + p.w, 0);
 
     if (totalWeight === 0) {
       showError('Total weight must be greater than 0.');
       return;
     }
 
-    const cx = parsed.reduce((s, p) => s + p.x * p.w, 0) / totalWeight;
-    const cy = parsed.reduce((s, p) => s + p.y * p.w, 0) / totalWeight;
+    const cx = allParsed.reduce((s, p) => s + p.x * p.w, 0) / totalWeight;
+    const cy = allParsed.reduce((s, p) => s + p.y * p.w, 0) / totalWeight;
 
     // Show result
     const box = document.getElementById('result-box');
@@ -389,6 +631,12 @@
         <span class="breakdown-coords">(${fmt(p.x)}, ${fmt(p.y)})</span>
         <span class="breakdown-weight">w: ${fmt(p.w)}</span>
       </div>
+    `).join('') + payrollParsed.map(p => `
+      <div class="breakdown-item">
+        <span class="breakdown-name" style="color:#34d399">${escHtml(p.name)}</span>
+        <span class="breakdown-coords" style="color:#6ee7b7">(${fmt(p.x)}, ${fmt(p.y)}) &mdash; $${fmt(p.payroll)}</span>
+        <span class="breakdown-weight" style="color:#34d399">w: ${fmt(p.w)}</span>
+      </div>
     `).join('') + `
       <div class="breakdown-item" style="margin-top:4px;">
         <span class="breakdown-name" style="color:#a5b4fc">Weighted Center</span>
@@ -397,7 +645,7 @@
       </div>
     `;
 
-    drawMap(parsed, cx, cy);
+    drawMap(allParsed, cx, cy);
   }
 
   function fmt(n) {
@@ -466,16 +714,17 @@
     pts.forEach(p => {
       const [px, py] = toScreen(p.x, p.y);
       const r = 5 + (p.w / maxW) * 12;
+      const isPayroll = p.isPayroll;
 
       ctx.beginPath();
       ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.fillStyle = '#3b4a6b';
+      ctx.fillStyle = isPayroll ? '#1e3a3f' : '#3b4a6b';
       ctx.fill();
-      ctx.strokeStyle = '#6366f1';
+      ctx.strokeStyle = isPayroll ? '#10b981' : '#6366f1';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      ctx.fillStyle = '#e2e8f0';
+      ctx.fillStyle = isPayroll ? '#34d399' : '#e2e8f0';
       ctx.font = '11px Segoe UI, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(p.name, px, py - r - 4);
@@ -498,7 +747,9 @@
 
   function clearAll() {
     points = [];
+    payrollPoints = [];
     renderList();
+    renderPayrollList();
     const box = document.getElementById('result-box');
     box.className = 'result-box';
     box.innerHTML = '<span class="result-empty">Add points and click Calculate</span>';
@@ -608,6 +859,9 @@
     ['99', 50.9848, 11.0299, 1.64],
   ];
   seedData.forEach(([name, x, y, w]) => addPoint(name, x, y, w));
+
+  // Initialize payroll section as disabled
+  document.getElementById('payroll-content').classList.add('payroll-disabled');
 </script>
 </body>
 </html>
