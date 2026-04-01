@@ -860,6 +860,27 @@
   ];
   seedData.forEach(([name, x, y, w]) => addPoint(name, x, y, w));
 
+  // Seed payroll data
+  const payrollSeed = [
+    ['Karlsruhe',       48.99999229, 8.399993448,  61524564],
+    ['Coburg',          50.26660748, 10.96660681,   58840986],
+    ['Berlin',          52.52181866, 13.40154862,   59292960],
+    ['Cottbus',         51.7704175,  14.32996741,   48050178],
+    ['Bremerhaven',     53.55043805, 8.579982461,   58713872],
+    ['Hamburg',         53.55002464, 9.999999144,   63939784],
+    ['Kassel',          51.30000694, 9.500029662,   61086719],
+    ['Schwerin',        53.63330408, 11.41669861,   46524774],
+    ['Bremen',          53.1299986,  8.220004434,   54123539],
+    ['Bielefeld',       52.02998822, 8.530011351,   57033103],
+    ['Wiesbaden',       49.98247246, 8.273219156,   55366459],
+    ['Saarbrücken',     49.25039044, 6.970003213,   56143286],
+    ['Chemnitz',        50.82998395, 12.91997595,   47852439],
+    ['Magdeburg',       52.13042137, 11.62000362,   47358096],
+    ['Flensburg',       54.78374778, 9.433315388,   52697006],
+    ['Erfurt',          50.97005292, 11.02996212,   46708387],
+  ];
+  payrollSeed.forEach(([name, x, y, pay]) => addPayrollPoint(name, x, y, pay));
+
   // Initialize payroll section as disabled
   document.getElementById('payroll-content').classList.add('payroll-disabled');
 </script>
