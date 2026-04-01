@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weighted Center Calculator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #f8fafc;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-bottom: 32px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 960px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 640px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: #1e2330;
+      border: 1px solid #2d3447;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .panel h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .input-row input {
+      background: #0f1117;
+      border: 1px solid #2d3447;
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      width: 100%;
+      transition: border-color 0.15s;
+    }
+
+    .input-row input:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    .input-row input::placeholder { color: #475569; }
+
+    .btn-remove {
+      background: none;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 8px 10px;
+      font-size: 1rem;
+      line-height: 1;
+      transition: all 0.15s;
+    }
+
+    .btn-remove:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+      background: #1f1114;
+    }
+
+    .col-headers {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .col-headers span {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-add {
+      background: #1e3a5f;
+      color: #60a5fa;
+      border: 1px dashed #3b5f8a;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn-add:hover { background: #1e4a7a; border-color: #60a5fa; }
+
+    .btn-calculate {
+      background: #6366f1;
+      color: white;
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px;
+      font-size: 1rem;
+    }
+
+    .btn-calculate:hover { background: #4f52d9; }
+
+    .btn-clear {
+      background: #1e2330;
+      color: #94a3b8;
+      border: 1px solid #2d3447;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn-clear:hover { border-color: #64748b; color: #e2e8f0; }
+
+    .result-box {
+      background: #0f1117;
+      border: 1px solid #2d3447;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 16px;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .result-box.has-result { border-color: #6366f1; }
+
+    .result-empty {
+      color: #475569;
+      font-size: 0.875rem;
+      text-align: center;
+      margin: auto;
+    }
+
+    .result-coord {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #a5b4fc;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-label {
+      font-size: 0.8rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .result-breakdown {
+      margin-top: 12px;
+    }
+
+    .result-breakdown h3 {
+      font-size: 0.8rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #1e2330;
+      font-size: 0.85rem;
+    }
+
+    .breakdown-item:last-child { border-bottom: none; }
+
+    .breakdown-name { color: #e2e8f0; font-weight: 500; }
+    .breakdown-coords { color: #94a3b8; font-variant-numeric: tabular-nums; }
+    .breakdown-weight { color: #6366f1; font-weight: 600; min-width: 40px; text-align: right; }
+
+    .error {
+      color: #f87171;
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+
+    canvas {
+      width: 100%;
+      border-radius: 8px;
+      display: block;
+      background: #0f1117;
+      border: 1px solid #2d3447;
+      margin-top: 16px;
+      cursor: crosshair;
+    }
+
+    .map-hint {
+      font-size: 0.75rem;
+      color: #475569;
+      margin-top: 6px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Weighted Center Calculator</h1>
+<p class="subtitle">Enter named coordinates and weights to find the weighted centroid</p>
+
+<div class="container">
+  <!-- Left panel: inputs -->
+  <div class="panel">
+    <h2>Coordinates</h2>
+
+    <div class="col-headers">
+      <span>Name</span>
+      <span>X</span>
+      <span>Y</span>
+      <span>Weight</span>
+      <span></span>
+    </div>
+
+    <div id="points-list"></div>
+
+    <button class="btn btn-add" onclick="addPoint()">+ Add Point</button>
+
+    <div id="error" class="error" style="display:none;"></div>
+
+    <button class="btn btn-calculate" onclick="calculate()">Calculate Weighted Center</button>
+    <button class="btn btn-clear" onclick="clearAll()">Clear All</button>
+  </div>
+
+  <!-- Right panel: results + map -->
+  <div class="panel">
+    <h2>Result</h2>
+
+    <div class="result-label">Weighted Center</div>
+    <div id="result-box" class="result-box">
+      <span class="result-empty">Add points and click Calculate</span>
+    </div>
+
+    <div id="breakdown" class="result-breakdown" style="display:none;">
+      <h3>Points</h3>
+      <div id="breakdown-list"></div>
+    </div>
+
+    <canvas id="map" height="300"></canvas>
+    <div class="map-hint">Visual map of points (size = weight)</div>
+  </div>
+</div>
+
+<script>
+  let points = [];
+  let idCounter = 0;
+
+  function addPoint(name = '', x = '', y = '', weight = '1') {
+    const id = idCounter++;
+    points.push({ id, name, x, y, weight });
+    renderList();
+  }
+
+  function removePoint(id) {
+    points = points.filter(p => p.id !== id);
+    renderList();
+  }
+
+  function renderList() {
+    const list = document.getElementById('points-list');
+    list.innerHTML = '';
+    points.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'input-row';
+      row.innerHTML = `
+        <input type="text"   placeholder="Point name" value="${esc(p.name)}"   oninput="update(${p.id},'name',this.value)">
+        <input type="number" placeholder="X"          value="${esc(p.x)}"      oninput="update(${p.id},'x',this.value)" step="any">
+        <input type="number" placeholder="Y"          value="${esc(p.y)}"      oninput="update(${p.id},'y',this.value)" step="any">
+        <input type="number" placeholder="Weight"     value="${esc(p.weight)}" oninput="update(${p.id},'weight',this.value)" step="any" min="0">
+        <button class="btn-remove" onclick="removePoint(${p.id})" title="Remove">&#x2715;</button>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  function esc(v) {
+    return String(v).replace(/"/g, '&quot;');
+  }
+
+  function update(id, field, value) {
+    const p = points.find(p => p.id === id);
+    if (p) p[field] = value;
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('error');
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+  }
+
+  function calculate() {
+    showError('');
+
+    if (points.length === 0) {
+      showError('Add at least one point.');
+      return;
+    }
+
+    const parsed = [];
+    for (const p of points) {
+      const x = parseFloat(p.x);
+      const y = parseFloat(p.y);
+      const w = parseFloat(p.weight);
+      const name = p.name.trim() || `Point ${parsed.length + 1}`;
+
+      if (isNaN(x) || isNaN(y)) { showError(`"${name}" has invalid X or Y coordinates.`); return; }
+      if (isNaN(w) || w < 0)    { showError(`"${name}" has an invalid weight (must be >= 0).`); return; }
+
+      parsed.push({ name, x, y, w });
+    }
+
+    const totalWeight = parsed.reduce((s, p) => s + p.w, 0);
+
+    if (totalWeight === 0) {
+      showError('Total weight must be greater than 0.');
+      return;
+    }
+
+    const cx = parsed.reduce((s, p) => s + p.x * p.w, 0) / totalWeight;
+    const cy = parsed.reduce((s, p) => s + p.y * p.w, 0) / totalWeight;
+
+    // Show result
+    const box = document.getElementById('result-box');
+    box.className = 'result-box has-result';
+    box.innerHTML = `
+      <div class="result-coord">( ${fmt(cx)}, ${fmt(cy)} )</div>
+      <div style="font-size:0.8rem;color:#64748b">Total weight: ${fmt(totalWeight)}</div>
+    `;
+
+    // Show breakdown
+    const bk = document.getElementById('breakdown');
+    const bl = document.getElementById('breakdown-list');
+    bk.style.display = 'block';
+    bl.innerHTML = parsed.map(p => `
+      <div class="breakdown-item">
+        <span class="breakdown-name">${escHtml(p.name)}</span>
+        <span class="breakdown-coords">(${fmt(p.x)}, ${fmt(p.y)})</span>
+        <span class="breakdown-weight">w: ${fmt(p.w)}</span>
+      </div>
+    `).join('') + `
+      <div class="breakdown-item" style="margin-top:4px;">
+        <span class="breakdown-name" style="color:#a5b4fc">Weighted Center</span>
+        <span class="breakdown-coords" style="color:#a5b4fc">(${fmt(cx)}, ${fmt(cy)})</span>
+        <span class="breakdown-weight" style="color:#a5b4fc">${fmt(totalWeight)}</span>
+      </div>
+    `;
+
+    drawMap(parsed, cx, cy);
+  }
+
+  function fmt(n) {
+    return parseFloat(n.toFixed(4)).toString();
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function drawMap(pts, cx, cy) {
+    const canvas = document.getElementById('map');
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.clientWidth;
+    const H = 300;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const PAD = 40;
+
+    const xs = pts.map(p => p.x).concat([cx]);
+    const ys = pts.map(p => p.y).concat([cy]);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+
+    const rangeX = maxX - minX || 1;
+    const rangeY = maxY - minY || 1;
+    const scaleX = (W - PAD * 2) / rangeX;
+    const scaleY = (H - PAD * 2) / rangeY;
+
+    function toScreen(x, y) {
+      return [
+        PAD + (x - minX) * scaleX,
+        H - PAD - (y - minY) * scaleY
+      ];
+    }
+
+    const maxW = Math.max(...pts.map(p => p.w), 0.001);
+
+    // Grid lines
+    ctx.strokeStyle = '#1e2330';
+    ctx.lineWidth = 1;
+    const gridSteps = 5;
+    for (let i = 0; i <= gridSteps; i++) {
+      const gx = PAD + i * (W - PAD * 2) / gridSteps;
+      const gy = PAD + i * (H - PAD * 2) / gridSteps;
+      ctx.beginPath(); ctx.moveTo(gx, PAD); ctx.lineTo(gx, H - PAD); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(PAD, gy); ctx.lineTo(W - PAD, gy); ctx.stroke();
+    }
+
+    // Draw lines from center to each point
+    const [scx, scy] = toScreen(cx, cy);
+    pts.forEach(p => {
+      const [px, py] = toScreen(p.x, p.y);
+      ctx.beginPath();
+      ctx.moveTo(scx, scy);
+      ctx.lineTo(px, py);
+      ctx.strokeStyle = '#2d3447';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    // Draw points
+    pts.forEach(p => {
+      const [px, py] = toScreen(p.x, p.y);
+      const r = 5 + (p.w / maxW) * 12;
+
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.fillStyle = '#3b4a6b';
+      ctx.fill();
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = '11px Segoe UI, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(p.name, px, py - r - 4);
+    });
+
+    // Draw weighted center (star)
+    ctx.beginPath();
+    ctx.arc(scx, scy, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#a5b4fc';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 11px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Center', scx, scy - 14);
+  }
+
+  function clearAll() {
+    points = [];
+    renderList();
+    const box = document.getElementById('result-box');
+    box.className = 'result-box';
+    box.innerHTML = '<span class="result-empty">Add points and click Calculate</span>';
+    document.getElementById('breakdown').style.display = 'none';
+    document.getElementById('error').style.display = 'none';
+    const canvas = document.getElementById('map');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Seed with 3 example points
+  addPoint('Warehouse A', 10, 20, 3);
+  addPoint('Warehouse B', 50, 40, 5);
+  addPoint('Warehouse C', 30, 70, 2);
+</script>
+</body>
+</html>
